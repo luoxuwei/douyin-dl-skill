@@ -26,6 +26,8 @@ git clone https://github.com/luoxuwei/douyin-dl-skill ~/.claude/skills/douyin-dl
 cd <那个目录> && npm install
 ```
 
+注意：Skill 目录必须是真实目录，不能用符号链接或 Windows junction 指向别处，Claude Code 扫描时会跳过链接目录。装完要新开会话才会加载。
+
 然后在 Claude Code 里说 `/douyin-dl https://v.douyin.com/xxxx/`，或直接说"下载这个抖音视频"。
 
 ## 依赖
