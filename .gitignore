@@ -1,0 +1,7 @@
+node_modules/
+out/
+*.mp4
+*.json
+!package.json
+!package-lock.json
+.dl-*/
