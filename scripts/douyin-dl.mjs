@@ -14,7 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { findBrowser, findFfmpeg, safeName, UA } from "./common.mjs";
 
 const require = createRequire(import.meta.url);
 const puppeteer = require("puppeteer-core");
@@ -31,47 +31,6 @@ const forcedName = nameIdx >= 0 ? args[nameIdx + 1] : null;
 const keepParts = args.includes("--keep-parts");
 fs.mkdirSync(outdir, { recursive: true });
 
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-
-function findBrowser() {
-  if (process.env.BROWSER_PATH && fs.existsSync(process.env.BROWSER_PATH)) return process.env.BROWSER_PATH;
-  const cands = [
-    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-    "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/microsoft-edge",
-  ];
-  const hit = cands.find((p) => fs.existsSync(p));
-  if (!hit) throw new Error("No Edge/Chrome found. Set BROWSER_PATH to the browser executable.");
-  return hit;
-}
-
-function findFfmpeg() {
-  if (process.env.FFMPEG && fs.existsSync(process.env.FFMPEG)) return process.env.FFMPEG;
-  const probe = spawnSync(process.platform === "win32" ? "where" : "which", ["ffmpeg"], { encoding: "utf8" });
-  if (probe.status === 0) return probe.stdout.trim().split(/\r?\n/)[0];
-  // winget's Gyan.FFmpeg install location on Windows
-  const local = process.env.LOCALAPPDATA;
-  if (local) {
-    const pk = path.join(local, "Microsoft", "WinGet", "Packages");
-    if (fs.existsSync(pk)) {
-      for (const d of fs.readdirSync(pk)) if (d.startsWith("Gyan.FFmpeg")) {
-        for (const sub of fs.readdirSync(path.join(pk, d))) {
-          const bin = path.join(pk, d, sub, "bin", "ffmpeg.exe");
-          if (fs.existsSync(bin)) return bin;
-        }
-      }
-    }
-  }
-  return null;
-}
-
-function safeName(s) {
-  return s.replace(/[\\/:*?"<>|\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "douyin";
-}
 
 async function fetchTo(u, file, cookie) {
   const res = await fetch(u, { headers: { "User-Agent": UA, Referer: "https://www.douyin.com/", Cookie: cookie } });
@@ -91,7 +50,10 @@ try {
   page.on("response", (r) => {
     const u = r.url();
     const ct = r.headers()["content-type"] || "";
-    if (/video\/mp4|audio\/mp4/.test(ct) && /douyinvod|\/play\//.test(u) && !streams.has(u)) streams.set(u, { ct, status: r.status() });
+    if (!/video\/mp4|audio\/mp4/.test(ct) || !/douyinvod|\/play\//.test(u)) return;
+    // Douyin re-requests the same media with different query params; dedupe on path
+    const key = u.split("?")[0];
+    if (![...streams.values()].some((v) => v.key === key)) streams.set(u, { ct, status: r.status(), key });
   });
   console.log("opening", url);
   await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 }).catch((e) => console.log("goto:", e.message));

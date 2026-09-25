@@ -1,11 +1,11 @@
 {
-  "name": "douyin-dl",
+  "name": "video-dl",
   "version": "1.0.0",
-  "description": "Download Douyin videos via a real headless browser (Claude Code skill)",
+  "description": "Download videos from Douyin, Bilibili, YouTube and more: yt-dlp with a headless-browser fallback. Claude Code skill + CLI.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node scripts/douyin-dl.mjs"
+    "start": "node scripts/video-dl.mjs"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "puppeteer-core": "^25.12.0"
   },
   "bin": {
-    "douyin-dl": "scripts/douyin-dl.mjs"
+    "douyin-dl": "scripts/douyin-dl.mjs",
+    "video-dl": "scripts/video-dl.mjs"
   }
 }
