@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `video-dl` | 下载抖音、小红书、B 站、YouTube 等平台的视频；列格式选清晰度；博主主页或合集批量下载；扫码登录 | `scripts/video-dl.mjs`、`list-dl.mjs`、`login.mjs` |
 | `transcribe` | 本地视频或音频的语音转成带时间戳的文字，输出 md / srt / txt / json；没字幕的课程视频直接变笔记 | `scripts/transcribe.py` |
-| `video-notes` | 链接或本地视频 → 下载 → 转写 → 抽帧找封面和幻灯片 → 核对资料链接 → Markdown 和 PDF | 编排上面两个，加 `frames.mjs`、`notes-pdf.mjs` |
+| `video-notes` | 任何内容的视频（课程、演讲、教程、评测、书单、会议）→ 下载或读取 → 转写 → 抽帧找关键画面 → 按内容类型整理 → Markdown 和 PDF | 编排上面两个，加 `frames.mjs`、`notes-pdf.mjs` |
 
 ## video-dl
 
@@ -49,7 +49,7 @@ node scripts/login.mjs --status | --clear
 
 ## video-notes
 
-流水线：`video-dl.mjs` 下载（本地文件跳过）→ `transcribe.py` 转写 → `frames.mjs` 每秒抽帧并拼成带秒数的缩略图 → Claude 看缩略图定位封面、幻灯片、图表，`ffmpeg crop` 裁出 → 子代理核对资料链接 → 按 `skills/video-notes/模板.md` 写 Markdown → `notes-pdf.mjs` 用本机 Edge 转 PDF。示例：两条 5 分钟的抖音书单视频，整理成 13 页 PDF，含 8 本书的封面、作者、核对过的链接和视频里的评价。
+脚本层和内容无关：`video-dl.mjs` 下载（本地文件跳过）→ `transcribe.py` 转写 → `frames.mjs` 抽帧并拼成带秒数的缩略图 → Claude 看缩略图定位画面，`ffmpeg crop` 裁出 → 需要时子代理核对链接 → 写 Markdown → `notes-pdf.mjs` 转 PDF。内容层按视频类型选整理方式，SKILL.md 里有七类对照表：课程讲解（分节要点、术语表、自测）、演讲访谈（论点加原话）、操作教程（步骤表配截图、命令、常见错误）、资源推荐（总览表、封面、核对过的链接）、产品评测（参数、优缺点）、会议录像（议题、决定、待办）、其他（摘要加全文）。`模板.md` 每类一节。示例：两条抖音书单视频整理成 13 页 PDF，含 8 本书的封面和核对过的链接。
 
 ## 安装
 
