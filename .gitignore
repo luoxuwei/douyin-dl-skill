@@ -5,3 +5,5 @@ out/
 !package.json
 !package-lock.json
 .dl-*/
+.venv-transcribe/
+.notes-pdf.html

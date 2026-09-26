@@ -1,7 +1,7 @@
 {
   "name": "video-dl",
   "version": "1.0.0",
-  "description": "Download videos from Douyin, Bilibili, YouTube and more: yt-dlp with a headless-browser fallback. Claude Code skill + CLI.",
+  "description": "Video to notes for Claude Code: download (Douyin, Bilibili, YouTube, Xiaohongshu), transcribe (faster-whisper), frames, Markdown to PDF. Three skills: video-dl, transcribe, video-notes.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,6 +12,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "markdown-it": "^15.0.2",
     "puppeteer-core": "^25.12.0"
   },
   "bin": {
