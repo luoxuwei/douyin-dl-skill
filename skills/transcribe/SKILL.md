@@ -59,6 +59,10 @@ allowed-tools: Bash(*python* *transcribe.py*), Bash(ffmpeg *), Read, Glob
 | `ffmpeg not found` | 没装 | `winget install Gyan.FFmpeg` |
 | 输出全是标点或重复句 | VAD 把音乐当成语音，或语言选错 | 加 `--lang`，或 `--model large-v3` |
 
+## 用中学：经验日志
+
+`${CLAUDE_SKILL_DIR}/../video-dl/经验.md` 是三个 Skill 共用的踩坑记录。开工前读最近 20 条里 transcribe 相关的；转写失败、用户指出错字、发现某类术语总认错，解决完追加一条（日期、skill、现象、原因、解法、影响）。用户反复纠正的人名术语，建议写进该课程或该博主的固定 `--prompt`，也记进日志方便下次直接用。
+
 ## 硬约束
 
 - 全程本地运行，音频不上传。

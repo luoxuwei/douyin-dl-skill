@@ -7,6 +7,7 @@
 | `video-dl` | 下载抖音、小红书、B 站、YouTube 等平台的视频；列格式选清晰度；博主主页或合集批量下载；扫码登录 | `scripts/video-dl.mjs`、`list-dl.mjs`、`login.mjs` |
 | `transcribe` | 本地视频或音频的语音转成带时间戳的文字，输出 md / srt / txt / json；没字幕的课程视频直接变笔记 | `scripts/transcribe.py` |
 | `video-notes` | 任何内容的视频（课程、演讲、教程、评测、书单、会议）→ 下载或读取 → 转写 → 抽帧找关键画面 → 按内容类型整理 → Markdown 和 PDF | 编排上面两个，加 `frames.mjs`、`notes-pdf.mjs` |
+| `video-tools-update` | 定期体检和升级：依赖版本、各站点通不通、yt-dlp 和转写模型的新动向；出报告，用户确认后升级并记录 | 读写 `经验.md`、`CHANGELOG.md`、`最近体检.json` |
 
 ## video-dl
 
@@ -51,6 +52,15 @@ node scripts/login.mjs --status | --clear
 
 脚本层和内容无关：`video-dl.mjs` 下载（本地文件跳过）→ `transcribe.py` 转写 → `frames.mjs` 抽帧并拼成带秒数的缩略图 → Claude 看缩略图定位画面，`ffmpeg crop` 裁出 → 需要时子代理核对链接 → 写 Markdown → `notes-pdf.mjs` 转 PDF。内容层按视频类型选整理方式，SKILL.md 里有七类对照表：课程讲解（分节要点、术语表、自测）、演讲访谈（论点加原话）、操作教程（步骤表配截图、命令、常见错误）、资源推荐（总览表、封面、核对过的链接）、产品评测（参数、优缺点）、会议录像（议题、决定、待办）、其他（摘要加全文）。`模板.md` 每类一节。示例：两条抖音书单视频整理成 13 页 PDF，含 8 本书的封面和核对过的链接。
 
+## 让工具自己进化
+
+两层机制，都随仓库走：
+
+- **用中学**：`经验.md` 是三个 Skill 共用的踩坑日志。每个 Skill 开工前读最近 20 条；失败时先搜有没有同样现象；解决完或被用户纠正后必须追加一条（日期、现象、原因、解法、影响）。已有 15 条，抖音 cookie 误判、小红书 xsec_token、B 站限流、Windows DLL 这些都在里面。
+- **主动跟进**：`/video-tools-update` 做体检：本地自检（依赖版本、各站点测试链接通不通、转写能跑）加联网跟进（yt-dlp changelog 和 issue、新平台、新转写模型），出报告让用户选全升级、只升依赖、只看不动。改完复检、记 `CHANGELOG.md`。video-dl 开工时发现上次体检超过 30 天会提醒。
+
+边界：AI 发现并提议，用户拍板，AI 执行并记录。不自动改脚本，不自动提交，不自动升大版本。
+
 ## 安装
 
 ```bash
@@ -70,6 +80,7 @@ powershell -File scripts/setup-transcribe.ps1    # transcribe 用，建 .venv-tr
 git clone https://github.com/luoxuwei/douyin-dl-skill ~/.claude/skills/video-dl
 cp -r ~/.claude/skills/video-dl/skills/transcribe  ~/.claude/skills/transcribe
 cp -r ~/.claude/skills/video-dl/skills/video-notes ~/.claude/skills/video-notes
+cp -r ~/.claude/skills/video-dl/skills/video-tools-update ~/.claude/skills/video-tools-update
 cd ~/.claude/skills/video-dl && npm install && powershell -File scripts/setup-transcribe.ps1
 ```
 
@@ -92,6 +103,10 @@ scripts/
 SKILL.md                  video-dl 的操作手册
 skills/transcribe/        transcribe 的 SKILL.md
 skills/video-notes/       video-notes 的 SKILL.md 和笔记模板
+skills/video-tools-update/ 体检升级的 SKILL.md
+经验.md                   踩坑日志，三个 Skill 共用
+CHANGELOG.md              每次升级和改动
+最近体检.json             上次体检的日期、基线版本、测试链接、结果
 ```
 
 ## 坑
