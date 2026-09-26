@@ -69,7 +69,7 @@ SKILL.md            Claude Code 的操作手册和失败对照表
 - 小红书和抖音给未登录用户也发一些像会话的 cookie，登录检测只认真正登录后才出现的那几个（`sessionid`、`customer-sso-sid`）加登录墙消失。
 - 浏览器带 `--enable-automation` 时小红书扫码会提示"重新扫码"，已在启动参数里去掉。
 - 上一次的登录浏览器没关时，再启动会报 `browser is already running for ...profile`，关掉那个窗口即可。
-- 本机代理会切断 Python 的 TLS（YouTube），git push 也时常 502；脚本本身没问题。
+- 本机代理会切断 Python 的 TLS（YouTube）；HTTPS 的 git push 时常 502，改用 SSH 走 443 端口（~/.ssh/config 里 HostName ssh.github.com, Port 443）就稳定。
 
 ## 限制
 
