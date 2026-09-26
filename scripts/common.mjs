@@ -51,12 +51,38 @@ export function safeName(s) {
   return String(s).replace(/[\\/:*?"<>|\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "video";
 }
 
+// Login state lives in a dedicated browser profile the user can delete at any time.
+// Default: ~/.video-dl/profile . Override with VIDEO_DL_PROFILE. Never inside the repo.
+export function profileDir() {
+  const home = process.env.USERPROFILE || process.env.HOME || ".";
+  return process.env.VIDEO_DL_PROFILE || path.join(home, ".video-dl", "profile");
+}
+export function hasProfile() { return fs.existsSync(path.join(profileDir(), "Default")); }
+
+// Launch options shared by all browser backends. headless=false opens a visible window (for login).
+export function launchOpts({ headless = true, useProfile = true } = {}) {
+  // ignoreDefaultArgs drops --enable-automation so sites (xiaohongshu) do not flag the window as a bot during QR login
+  const opts = { executablePath: findBrowser(), headless, ignoreDefaultArgs: ["--enable-automation"], args: ["--disable-gpu", "--no-sandbox", "--autoplay-policy=no-user-gesture-required", "--mute-audio", "--no-first-run", "--no-default-browser-check", "--disable-blink-features=AutomationControlled"] };
+  if (useProfile && (hasProfile() || !headless)) { fs.mkdirSync(profileDir(), { recursive: true }); opts.userDataDir = profileDir(); }
+  return opts;
+}
+
+const BOOL_FLAGS = ["--keep-parts", "--browser", "--ytdlp", "--list", "--yes", "--no-profile", "--playlist", "--dry-run"];
+const VAL_FLAGS = ["--name", "--wait", "--quality", "--format", "--limit", "--since", "--profile"];
+
 export function parseArgs(argv, self) {
   const url = argv.find((a) => /^https?:\/\//.test(a));
-  if (!url) { console.error(`usage: node ${self} <url> [outdir] [--name <basename>] [--keep-parts] [--wait <sec>] [--quality <height>]`); process.exit(2); }
+  if (!url) { console.error(`usage: node ${self} <url> [outdir] [--quality <height>] [--format <id>] [--list] [--name <basename>] [--playlist] [--limit N] [--yes] [--no-profile] [--keep-parts] [--wait <sec>]`); process.exit(2); }
   const flagVal = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
-  const consumed = new Set([url, "--keep-parts", "--browser", "--ytdlp"]);
-  for (const k of ["--name", "--wait", "--quality"]) { const i = argv.indexOf(k); if (i >= 0) { consumed.add(k); consumed.add(argv[i + 1]); } }
+  const consumed = new Set([url, ...BOOL_FLAGS]);
+  for (const k of VAL_FLAGS) { const i = argv.indexOf(k); if (i >= 0) { consumed.add(k); consumed.add(argv[i + 1]); } }
   const outdir = argv.find((a) => !consumed.has(a) && !a.startsWith("--")) || ".";
-  return { url, outdir, forcedName: flagVal("--name"), keepParts: argv.includes("--keep-parts"), wait: Number(flagVal("--wait") || 15), quality: flagVal("--quality"), forceBrowser: argv.includes("--browser"), forceYtdlp: argv.includes("--ytdlp") };
+  if (flagVal("--profile")) process.env.VIDEO_DL_PROFILE = flagVal("--profile");
+  return {
+    url, outdir, forcedName: flagVal("--name"), keepParts: argv.includes("--keep-parts"), wait: Number(flagVal("--wait") || 15),
+    quality: flagVal("--quality"), format: flagVal("--format"), list: argv.includes("--list"),
+    forceBrowser: argv.includes("--browser"), forceYtdlp: argv.includes("--ytdlp"),
+    useProfile: !argv.includes("--no-profile"),
+    playlist: argv.includes("--playlist"), limit: Number(flagVal("--limit") || 20), since: flagVal("--since"), yes: argv.includes("--yes"), dryRun: argv.includes("--dry-run"),
+  };
 }

@@ -6,29 +6,20 @@
 // passes every check by itself. We watch its network traffic for the video and audio streams
 // (Douyin web serves them as separate mp4s), download both with the page's cookies, then mux.
 //
-// usage: node douyin-dl.mjs <share-url-or-video-url> [outdir] [--name <basename>] [--keep-parts]
+// usage: node douyin-dl.mjs <share-url-or-video-url> [outdir] [--name <basename>] [--keep-parts] [--no-profile]
 // needs: Edge or Chrome installed; ffmpeg on PATH (or FFMPEG env var) for muxing.
-// Cookies are used in-memory only and never written to disk.
+// If a login profile exists (see login.mjs) it is used automatically; otherwise anonymous, in-memory cookies.
 
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { findBrowser, findFfmpeg, safeName, UA } from "./common.mjs";
+import { findFfmpeg, safeName, UA, parseArgs, launchOpts } from "./common.mjs";
 
 const require = createRequire(import.meta.url);
 const puppeteer = require("puppeteer-core");
 
-const args = process.argv.slice(2);
-const url = args.find((a) => /^https?:\/\//.test(a));
-if (!url) {
-  console.error("usage: node douyin-dl.mjs <url> [outdir] [--name <basename>] [--keep-parts]");
-  process.exit(2);
-}
-const outdir = args.find((a, i) => !a.startsWith("--") && a !== url && args[i - 1] !== "--name") || ".";
-const nameIdx = args.indexOf("--name");
-const forcedName = nameIdx >= 0 ? args[nameIdx + 1] : null;
-const keepParts = args.includes("--keep-parts");
+const { url, outdir, forcedName, keepParts, useProfile } = parseArgs(process.argv.slice(2), "douyin-dl.mjs");
 fs.mkdirSync(outdir, { recursive: true });
 
 
@@ -39,10 +30,7 @@ async function fetchTo(u, file, cookie) {
   return fs.statSync(file).size;
 }
 
-const browser = await puppeteer.launch({
-  executablePath: findBrowser(), headless: true,
-  args: ["--disable-gpu", "--no-sandbox", "--autoplay-policy=no-user-gesture-required", "--mute-audio"],
-});
+const browser = await puppeteer.launch(launchOpts({ headless: true, useProfile }));
 try {
   const page = await browser.newPage();
   await page.setUserAgent(UA);

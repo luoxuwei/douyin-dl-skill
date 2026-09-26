@@ -13,21 +13,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { findBrowser, findFfmpeg, safeName, UA, parseArgs } from "./common.mjs";
+import { findFfmpeg, safeName, UA, parseArgs, launchOpts } from "./common.mjs";
 
 const require = createRequire(import.meta.url);
 const puppeteer = require("puppeteer-core");
 
-const { url, outdir, forcedName, keepParts, wait } = parseArgs(process.argv.slice(2), "browser-dl.mjs");
+const { url, outdir, forcedName, keepParts, wait, useProfile } = parseArgs(process.argv.slice(2), "browser-dl.mjs");
 fs.mkdirSync(outdir, { recursive: true });
 
 const MEDIA_CT = /^(video\/mp4|audio\/mp4|video\/webm|audio\/webm|application\/octet-stream)/;
 const SKIP_URL = /\.(ts|m3u8|mpd)(\?|$)|\/hls\/|\/dash\//i;
 
-const browser = await puppeteer.launch({
-  executablePath: findBrowser(), headless: true,
-  args: ["--disable-gpu", "--no-sandbox", "--autoplay-policy=no-user-gesture-required", "--mute-audio"],
-});
+const browser = await puppeteer.launch(launchOpts({ headless: true, useProfile }));
 try {
   const page = await browser.newPage();
   await page.setUserAgent(UA);
